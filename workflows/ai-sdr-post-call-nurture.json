@@ -1,0 +1,883 @@
+{
+  "name": "AI SDR — Post-Call 5-Wave Nurture",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "post-call",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "name": "Post-Call Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        256,
+        472
+      ],
+      "id": "55d13874-da9a-4563-af3a-47f64cba9f9d",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "wf1-gate",
+              "leftValue": "={{ $json.body?.variables?.origin || '' }}",
+              "rightValue": "workflow1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Is WF1 call?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        368,
+        472
+      ],
+      "id": "b2c3d4e5-6789-abcd-ef01-234567890abc"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ JSON.stringify($json.body?.tags || $json.tags || []) }}",
+              "rightValue": "not_interested",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Is not_interested?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        472
+      ],
+      "id": "1542e4c5-6a20-4958-ab3d-970f937b67d4"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "outputKey": "wave1",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ String($('Post-Call Webhook').first().json.body?.variables?.wave || '') }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "wave2",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ String($('Post-Call Webhook').first().json.body?.variables?.wave || '') }}",
+                    "rightValue": "2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "wave3",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ String($('Post-Call Webhook').first().json.body?.variables?.wave || '') }}",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "wave4",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ String($('Post-Call Webhook').first().json.body?.variables?.wave || '') }}",
+                    "rightValue": "4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "wave5",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ String($('Post-Call Webhook').first().json.body?.variables?.wave || '') }}",
+                    "rightValue": "5",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "name": "Route by Wave",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1376,
+        448
+      ],
+      "id": "9b2844c3-21d8-4d6e-8430-e4221336a56a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"Email\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), locationId: \"{{GHL_LOCATION_ID}}\", subject: \"Quick follow-up on our call\", html: `<p>Hi ${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')},</p><p>{{SENDER_NAME}} from {{COMPANY_NAME}} here. One of our team just called — hope we caught you at an okay time (or left a clean voicemail if not).</p><p>Quick recap: {{COMPANY_NAME}} is an AI receptionist. It answers every call 24/7, books appointments, and handles FAQs so your team stops losing business to voicemail.</p><p>Three quick questions so I can point you in the right direction:</p><ol><li>How many calls does your business get in a typical week?</li><li>Who answers them today — you, office staff, or voicemail?</li><li>What's the #1 thing you'd want the AI to handle: booking appointments, answering FAQs, routing urgent calls, or something else?</li></ol><p>Short answers totally fine.</p><p>If you'd rather just see it in action, grab 15 min here:<br><a href=\"{{BOOKING_URL}}\">Book a demo</a></p><p>Most customers are live 3-5 days after the demo.</p><p>Best,<br>{{SENDER_NAME}}<br>{{SENDER_TITLE}}, {{COMPANY_NAME}}</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        112
+      ],
+      "id": "bcf6a42a-e40c-44c6-976a-428067169d56",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"SMS\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), message: `Hey ${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')}, {{SENDER_NAME}} from {{COMPANY_NAME}} -- just emailed you a quick follow-up from our call. If SMS is easier, reply here instead. -{{SENDER_NAME}}` }) }}",
+        "options": {}
+      },
+      "name": "SMS 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2048,
+        112
+      ],
+      "id": "1ac97008-eb2d-44a2-9514-a2f543fef0c7",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"Email\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), locationId: \"{{GHL_LOCATION_ID}}\", subject: \"What a missed call actually costs\", html: `<p>Hi ${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')},</p><p>Wanted to make sure our call earlier this week landed.</p><p>Here's the number most small business owners I talk to haven't run: if a missed call has a 30% chance of being a new customer worth $400 average lifetime value, every voicemail that doesn't get a callback costs you $120.</p><p>Most phone-dependent SMBs miss 20-40 calls a month. That's $2,400-$4,800 walking away every month.</p><p>{{COMPANY_NAME}}'s AI receptionist answers all of them — books the appointment if it's a new customer, routes it to you if it's urgent, handles the FAQ if it's just a question. Starts at $99/mo.</p><p>15 min to see it run on a sample call:<br><a href=\"{{BOOKING_URL}}\">Book a demo</a></p><p>Or reply with your weekly call volume and I'll ballpark what {{COMPANY_NAME}} would recover for you.</p><p>Best,<br>{{SENDER_NAME}}</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        304
+      ],
+      "id": "7f1e4986-caf9-45cc-924f-4b9609a41d65",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"SMS\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), message: \"Quick back-of-envelope: a missed call probably costs you ~$120. 20-40 missed/mo = $2.4-4.8k walking away. Full math in your inbox. -{{SENDER_NAME}}, {{COMPANY_NAME}}\" }) }}",
+        "options": {}
+      },
+      "name": "SMS 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2048,
+        304
+      ],
+      "id": "9039bdb5-9964-4ba5-9690-7bc589788857",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"Email\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), locationId: \"{{GHL_LOCATION_ID}}\", subject: \"From zero to live in 5 days\", html: `<p>Hi ${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')},</p><p>The most common question I get after \"what does it cost\": \"how much work is this on my end?\"</p><p>Here's what onboarding actually looks like:</p><ul><li><strong>Day 1:</strong> 30-min call. You tell us about your business, the questions you get asked, when to transfer calls, and who urgent calls should go to.</li><li><strong>Day 2-4:</strong> We build and train your AI receptionist. You review the voice + scripts.</li><li><strong>Day 5:</strong> You forward your business number to {{COMPANY_NAME}}. Every call starts getting answered.</li></ul><p>That's it. No contracts, no setup fee.</p><p>About the voice — it's a common concern. Our demo line is {{DEMO_PHONE}} if you want to call \"{{RECEPTIONIST_NAME}}\" (our demo receptionist) and hear it for yourself.</p><p>Or book 15 min to see it on your specific use case:<br><a href=\"{{BOOKING_URL}}\">Book a demo</a></p><p>Best,<br>{{SENDER_NAME}}</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        496
+      ],
+      "id": "0cb23652-dd43-46f6-950a-63d39a72e8eb",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"SMS\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), message: `${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')} -- if you want to hear the AI voice before a demo, call {{DEMO_PHONE}} and talk to our demo receptionist. See if you can tell it's AI. -{{SENDER_NAME}}` }) }}",
+        "options": {}
+      },
+      "name": "SMS 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2048,
+        496
+      ],
+      "id": "958711d2-3857-4936-b675-0b024129648f",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"Email\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), locationId: \"{{GHL_LOCATION_ID}}\", subject: \"Not a demo -- just 15 minutes\", html: `<p>Hi ${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')},</p><p>I know \"book a demo\" sounds like code for \"sit through a 45-min sales deck.\" It isn't.</p><p>Here's what actually happens on the 15 minutes:</p><ul><li>2 min: You tell me what calls you get and which ones you'd want AI to handle.</li><li>8 min: I show you a live AI receptionist answering a sample call for your exact business type.</li><li>5 min: We talk pricing ($99/$199/$399/mo depending on volume) and whether it's a fit. If it isn't, we say so.</li></ul><p>No contract discussion, no deck, no \"next step\" call. If you like it, we start onboarding. If not, you've lost 15 minutes.</p><p><a href=\"{{BOOKING_URL}}\">Book 15 min</a></p><p>Or reply with a time that works and I'll send an invite directly.</p><p>Best,<br>{{SENDER_NAME}}</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        688
+      ],
+      "id": "75594cc3-aa89-4c57-b372-7cce60510b74",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"SMS\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), message: `${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')} -- 15 min, no deck, I just show you the AI answering a sample call for your business type. Book: {{BOOKING_URL}} -{{SENDER_NAME}}` }) }}",
+        "options": {}
+      },
+      "name": "SMS 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2048,
+        688
+      ],
+      "id": "0ec83d58-0883-4903-b08c-8532f1db4963",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"Email\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), locationId: \"{{GHL_LOCATION_ID}}\", subject: \"Should I close this out?\", html: `<p>Hi ${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')},</p><p>I haven't heard back, so I want to make sure I'm not crowding your inbox.</p><p>Reply with 1, 2, or 3:</p><ol><li>Book a quick demo — send the link</li><li>Close it out for now</li><li>Reconnect in 30 days</li></ol><p>Either way, no hard feelings. Just trying to be useful without being annoying.</p><p>Best,<br>{{SENDER_NAME}}<br>{{SENDER_TITLE}}, {{COMPANY_NAME}}</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        880
+      ],
+      "id": "eb9c60de-b3bf-4404-860a-31131ee526f2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-04-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: \"SMS\", contactId: ($('Post-Call Webhook').first().json.body?.variables?.contactId || ''), message: `${($('Post-Call Webhook').first().json.body?.variables?.firstName || 'there')} -- last ping. Reply 1 to book, 2 to close it out, 3 to reconnect in 30 days. Either way, no pressure. -{{SENDER_NAME}}` }) }}",
+        "options": {}
+      },
+      "name": "SMS 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2048,
+        880
+      ],
+      "id": "fb3faeb4-d9a8-4153-8878-22ac25f2ac26",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ JSON.stringify($json.body?.tags || $json.tags || []) }}",
+              "rightValue": "appointment_booked",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Appointment booked?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        928,
+        376
+      ],
+      "id": "a25d6aa5-430f-4d44-aa03-988a5e5a334b"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "name": "Wait 1m > SMS 1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        112
+      ],
+      "id": "wait-1m-sms-1-17760958376911",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "name": "Wait 1m > SMS 2",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        304
+      ],
+      "id": "wait-1m-sms-2-17760958376912",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "name": "Wait 1m > SMS 3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        496
+      ],
+      "id": "wait-1m-sms-3-17760958376913",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "name": "Wait 1m > SMS 4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        688
+      ],
+      "id": "wait-1m-sms-4-17760958376914",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "name": "Wait 1m > SMS 5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        880
+      ],
+      "id": "wait-1m-sms-5-17760958376915",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    }
+  ],
+  "connections": {
+    "Post-Call Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is WF1 call?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is WF1 call?": {
+      "main": [
+        [
+          {
+            "node": "Is not_interested?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Is not_interested?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Appointment booked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Wave": {
+      "main": [
+        [
+          {
+            "node": "Email 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email 4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appointment booked?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Route by Wave",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 1": {
+      "main": [
+        [
+          {
+            "node": "Wait 1m > SMS 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 2": {
+      "main": [
+        [
+          {
+            "node": "Wait 1m > SMS 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 3": {
+      "main": [
+        [
+          {
+            "node": "Wait 1m > SMS 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 4": {
+      "main": [
+        [
+          {
+            "node": "Wait 1m > SMS 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 5": {
+      "main": [
+        [
+          {
+            "node": "Wait 1m > SMS 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1m > SMS 1": {
+      "main": [
+        [
+          {
+            "node": "SMS 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1m > SMS 2": {
+      "main": [
+        [
+          {
+            "node": "SMS 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1m > SMS 3": {
+      "main": [
+        [
+          {
+            "node": "SMS 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1m > SMS 4": {
+      "main": [
+        [
+          {
+            "node": "SMS 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1m > SMS 5": {
+      "main": [
+        [
+          {
+            "node": "SMS 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

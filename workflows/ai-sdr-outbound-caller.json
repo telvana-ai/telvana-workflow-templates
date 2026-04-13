@@ -1,0 +1,896 @@
+{
+  "name": "Workflow 1: Outbound Caller (5 Waves)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ghl-new-lead",
+        "options": {}
+      },
+      "name": "New Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        304,
+        688
+      ],
+      "id": "5b1eabbf-d311-4f6b-a0ef-8d28672fccbe",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://services.leadconnectorhq.com/contacts/\" + $('New Lead Webhook').first().json.body.contact_id + \"/tags\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ tags: [\"ai_sdr_active\"] }) }}",
+        "options": {}
+      },
+      "name": "Add ai_sdr_active tag",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        688
+      ],
+      "id": "6d71f97f-e136-40c4-9be7-66cd428a4855",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{VOICE_API_URL}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const b = $('New Lead Webhook').first().json.body; return JSON.stringify({ from: \"{{OUTBOUND_FROM_PHONE}}\", to: b.phone, outboundPromptId: \"{{VOICE_AGENT_PROMPT_ID}}\", variables: { origin: \"workflow1\", firstName: b.first_name, email: b.email, contactId: b.contact_id, wave: \"1\" } }); })() }}",
+        "options": {}
+      },
+      "name": "Call Lead (Wave 1)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        752,
+        688
+      ],
+      "id": "dff0890e-6fc2-44c2-933a-f483bee82b82",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait 2d before Wave 2",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        688
+      ],
+      "id": "adc51c80-0f59-4269-b733-567a6edc97bd",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ JSON.stringify($json.contact?.tags || $json.tags || []) }}",
+              "rightValue": "ai_sdr_active",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Still active? (Wave 2)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        688
+      ],
+      "id": "c5c7a8a4-4d43-4ebe-b652-a473e9afef32"
+    },
+    {
+      "parameters": {},
+      "name": "Exited Wave 2",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        784
+      ],
+      "id": "9d23daac-ef14-4245-a550-ca33dade7a85"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{VOICE_API_URL}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const b = $('New Lead Webhook').first().json.body; return JSON.stringify({ from: \"{{OUTBOUND_FROM_PHONE}}\", to: b.phone, outboundPromptId: \"{{VOICE_AGENT_PROMPT_ID}}\", variables: { origin: \"workflow1\", firstName: b.first_name, email: b.email, contactId: b.contact_id, wave: \"2\" } }); })() }}",
+        "options": {}
+      },
+      "name": "Call Lead (Wave 2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1648,
+        592
+      ],
+      "id": "41ab8283-b5e7-4d7b-b9d0-35c2c399a110",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait 2d before Wave 3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1872,
+        592
+      ],
+      "id": "0686455c-26bc-422c-a999-2fb31d279631",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ JSON.stringify($json.contact?.tags || $json.tags || []) }}",
+              "rightValue": "ai_sdr_active",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Still active? (Wave 3)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        592
+      ],
+      "id": "0d9bdc34-b0a0-4357-ab02-579cf0984352"
+    },
+    {
+      "parameters": {},
+      "name": "Exited Wave 3",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2544,
+        688
+      ],
+      "id": "00c36e7d-93ae-442c-bd68-2d622936c8c1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{VOICE_API_URL}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const b = $('New Lead Webhook').first().json.body; return JSON.stringify({ from: \"{{OUTBOUND_FROM_PHONE}}\", to: b.phone, outboundPromptId: \"{{VOICE_AGENT_PROMPT_ID}}\", variables: { origin: \"workflow1\", firstName: b.first_name, email: b.email, contactId: b.contact_id, wave: \"3\" } }); })() }}",
+        "options": {}
+      },
+      "name": "Call Lead (Wave 3)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2544,
+        496
+      ],
+      "id": "481c8bf7-10b1-4832-b7f3-2c19cfd4d8b3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "name": "Wait 3d before Wave 4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2768,
+        496
+      ],
+      "id": "ee853dbc-cf0b-460e-8925-4f9a188050eb",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ JSON.stringify($json.contact?.tags || $json.tags || []) }}",
+              "rightValue": "ai_sdr_active",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Still active? (Wave 4)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3216,
+        496
+      ],
+      "id": "0938acb8-d9af-4e47-9e54-f8cbddd9e17a"
+    },
+    {
+      "parameters": {},
+      "name": "Exited Wave 4",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3440,
+        592
+      ],
+      "id": "8c18b8c0-07d0-4ffc-ab0b-5f1a152072d7"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{VOICE_API_URL}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const b = $('New Lead Webhook').first().json.body; return JSON.stringify({ from: \"{{OUTBOUND_FROM_PHONE}}\", to: b.phone, outboundPromptId: \"{{VOICE_AGENT_PROMPT_ID}}\", variables: { origin: \"workflow1\", firstName: b.first_name, email: b.email, contactId: b.contact_id, wave: \"4\" } }); })() }}",
+        "options": {}
+      },
+      "name": "Call Lead (Wave 4)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3440,
+        400
+      ],
+      "id": "1f08f0d3-5595-4536-bda9-9599d011bc70",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 4,
+        "unit": "days"
+      },
+      "name": "Wait 4d before Wave 5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3664,
+        400
+      ],
+      "id": "d855847a-774d-48c1-9beb-54772d21932e",
+      "webhookId": "{{AUTO_GENERATED_ON_IMPORT}}"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ JSON.stringify($json.contact?.tags || $json.tags || []) }}",
+              "rightValue": "ai_sdr_active",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Still active? (Wave 5)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4112,
+        400
+      ],
+      "id": "5c8e2c67-9a60-4eb7-8c92-cd1462f0d984"
+    },
+    {
+      "parameters": {},
+      "name": "Exited Wave 5",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4336,
+        496
+      ],
+      "id": "8805dd82-4165-4f47-87d7-45cffca8be48"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{VOICE_API_URL}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const b = $('New Lead Webhook').first().json.body; return JSON.stringify({ from: \"{{OUTBOUND_FROM_PHONE}}\", to: b.phone, outboundPromptId: \"{{VOICE_AGENT_PROMPT_ID}}\", variables: { origin: \"workflow1\", firstName: b.first_name, email: b.email, contactId: b.contact_id, wave: \"5\" } }); })() }}",
+        "options": {}
+      },
+      "name": "Call Lead (Wave 5)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4336,
+        304
+      ],
+      "id": "0b9743a4-46ab-41ee-b2d9-b7bf7b3d0eaf",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "name": "All Calls Fired",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4560,
+        304
+      ],
+      "id": "f2c11451-4a72-4788-8d9e-e074aee8ce19"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ \"https://services.leadconnectorhq.com/contacts/\" + $('New Lead Webhook').first().json.body.contact_id + \"/tags\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ tags: [\"ai_sdr_active\"] }) }}",
+        "options": {}
+      },
+      "name": "Remove ai_sdr_active (completed)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4784,
+        304
+      ],
+      "id": "a1b2c3d4-5678-9abc-def0-123456789abc",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://services.leadconnectorhq.com/contacts/\" + $('New Lead Webhook').first().json.body.contact_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Contact (Wave 2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        688
+      ],
+      "id": "6a2cc7ea-7338-4bb2-90d7-5e560854e77a",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://services.leadconnectorhq.com/contacts/\" + $('New Lead Webhook').first().json.body.contact_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Contact (Wave 3)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2096,
+        592
+      ],
+      "id": "64946faf-f58d-4730-90e4-cf9266b0f607",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://services.leadconnectorhq.com/contacts/\" + $('New Lead Webhook').first().json.body.contact_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Contact (Wave 4)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2992,
+        496
+      ],
+      "id": "883c71e5-18a0-49a3-bbcb-5f397daf60a1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://services.leadconnectorhq.com/contacts/\" + $('New Lead Webhook').first().json.body.contact_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Contact (Wave 5)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3888,
+        400
+      ],
+      "id": "2959529b-3468-4382-83f5-83f0b762cd94",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "{{CREDENTIAL_ID}}",
+          "name": "{{CREDENTIAL_NAME}}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Add ai_sdr_active tag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add ai_sdr_active tag": {
+      "main": [
+        [
+          {
+            "node": "Call Lead (Wave 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Lead (Wave 1)": {
+      "main": [
+        [
+          {
+            "node": "Wait 2d before Wave 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2d before Wave 2": {
+      "main": [
+        [
+          {
+            "node": "Fetch Contact (Wave 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still active? (Wave 2)": {
+      "main": [
+        [
+          {
+            "node": "Call Lead (Wave 2)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Exited Wave 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Lead (Wave 2)": {
+      "main": [
+        [
+          {
+            "node": "Wait 2d before Wave 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2d before Wave 3": {
+      "main": [
+        [
+          {
+            "node": "Fetch Contact (Wave 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still active? (Wave 3)": {
+      "main": [
+        [
+          {
+            "node": "Call Lead (Wave 3)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Exited Wave 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Lead (Wave 3)": {
+      "main": [
+        [
+          {
+            "node": "Wait 3d before Wave 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3d before Wave 4": {
+      "main": [
+        [
+          {
+            "node": "Fetch Contact (Wave 4)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still active? (Wave 4)": {
+      "main": [
+        [
+          {
+            "node": "Call Lead (Wave 4)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Exited Wave 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Lead (Wave 4)": {
+      "main": [
+        [
+          {
+            "node": "Wait 4d before Wave 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 4d before Wave 5": {
+      "main": [
+        [
+          {
+            "node": "Fetch Contact (Wave 5)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still active? (Wave 5)": {
+      "main": [
+        [
+          {
+            "node": "Call Lead (Wave 5)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Exited Wave 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Lead (Wave 5)": {
+      "main": [
+        [
+          {
+            "node": "All Calls Fired",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All Calls Fired": {
+      "main": [
+        [
+          {
+            "node": "Remove ai_sdr_active (completed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Contact (Wave 2)": {
+      "main": [
+        [
+          {
+            "node": "Still active? (Wave 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Contact (Wave 3)": {
+      "main": [
+        [
+          {
+            "node": "Still active? (Wave 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Contact (Wave 4)": {
+      "main": [
+        [
+          {
+            "node": "Still active? (Wave 4)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Contact (Wave 5)": {
+      "main": [
+        [
+          {
+            "node": "Still active? (Wave 5)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

@@ -1,8 +1,8 @@
 # Telvana Workflow Templates
 
-Public, sanitized n8n workflow templates extracted from the production automation stack that powers [Telvana](https://telvana.com)'s AI receptionist and outbound calling product.
+Ready-to-import [n8n](https://n8n.io) workflows for running an AI phone receptionist and a 5-wave outbound calling sequence on top of [GoHighLevel](https://www.gohighlevel.com) (GHL).
 
-Use these as a starting point for building your own AI phone automations on top of [n8n](https://n8n.io), [GoHighLevel](https://www.gohighlevel.com) (GHL), and any outbound voice API.
+Import, fill in a few placeholders, wire up a webhook, and you have a working AI SDR + inbound demo-link flow.
 
 ## What's included
 
@@ -11,8 +11,6 @@ Use these as a starting point for building your own AI phone automations on top 
 | [`ai-receptionist-inbound.json`](workflows/ai-receptionist-inbound.json) | Receives a post-call webhook from an AI receptionist. If the caller asked for a demo link, upserts the contact into GHL and sends a branded booking-link SMS. |
 | [`ai-sdr-outbound-caller.json`](workflows/ai-sdr-outbound-caller.json) | 5-wave outbound calling sequence. Triggered by a `ContactTagUpdate` webhook when a lead is tagged active in GHL. Fires a voice call through your outbound API, waits, calls again across 5 waves, then removes the active tag. |
 | [`ai-sdr-post-call-nurture.json`](workflows/ai-sdr-post-call-nurture.json) | Post-call follow-up for the 5-wave sequence above. Sends a per-wave email, waits 1 minute, sends a per-wave SMS. Skips if the call ended with `not_interested` or `appointment_booked`. |
-
-All three are sanitized — every credential, location ID, phone number, prompt ID, calendar ID, and company-branded copy has been replaced with a `{{PLACEHOLDER}}`.
 
 ## Prerequisites
 
@@ -61,9 +59,9 @@ These templates read and write specific GHL tags. Add them to your GHL account b
 
 ## Limitations and disclaimers
 
-- These templates are provided as-is. They powered the real Telvana stack at the time of export but *your* environment will be different — expect to debug.
-- The email/SMS copy is generic. You'll want to rewrite it in your own voice.
-- The outbound voice API shape (`from`, `to`, `outboundPromptId`, `variables`) is Telvana's. If you use a different provider, you'll need to rewrite the HTTP body in the `Call Lead` nodes.
+- These templates are provided as-is. Your environment will be different — expect to debug.
+- The email and SMS copy is a starting point. You'll want to rewrite it in your own voice.
+- The outbound voice API shape (`from`, `to`, `outboundPromptId`, `variables`) matches [Telvana](https://telvana.com). If you use a different provider, you'll need to rewrite the HTTP body in the `Call Lead` nodes.
 - A2P 10DLC is required for US SMS. These templates do not handle compliance for you.
 
 ## Contributing
